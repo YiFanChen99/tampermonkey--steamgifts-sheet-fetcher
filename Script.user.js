@@ -69,8 +69,13 @@ headers.forEach((header) => {
     const wantStrs = wants
         .map((game) => {
             const wantStr = /^\d/.test(game.J) ? `W${game.J}` : `W-${game.J}`;
-            const dateStr = new Date(game.G).toLocaleDateString();
-            return `(${wantStr},D${dateStr})`;
+
+            const date = new Date(game.G);
+            const year = String(date.getFullYear()).slice(-2);
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const dateStr = `D${year}/${month}`;
+
+            return `(${wantStr},${dateStr})`;
         })
         .join('or');
 
