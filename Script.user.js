@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steamgifts-sheet-fetcher
 // @namespace    https://github.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher
-// @version      1.0.1
+// @version      1.0.2
 // @description  Fetch games from Google Sheet via App Script
 // @author       YiFanChen99
 // @match        *://www.steamgifts.com/giveaways/search*
@@ -14,14 +14,14 @@
 'use strict';
 
 const updateDurationMs = 24 * 60 * 60 * 1000; // 24 hours
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwZWh1RFJmNCUaaVQyEzMXZRPDF8NlXtPwxyqKp_Wx2uiNqjnoh_yO7k334QdeNRyQR/exec';
+const webAppUrl = 'https://script.google.com/macros/s/AKfycbwZWh1RFJmNCUaaVQyEzMXZRPDF8NlXtPwxyqKp_Wx2uiNqjnoh_yO7k334QdeNRyQR/exec';
 
 async function fetchData() {
     console.log('單機遊戲 Sheets: fetchData start');
     return new Promise(resolve => {
         GM_xmlhttpRequest({
             method: "GET",
-            url: WEB_APP_URL,
+            url: webAppUrl,
             onload: function(response) {
                 const resp = JSON.parse(response.responseText);
                 const data = { ...resp, time: Date.now() }
@@ -59,10 +59,11 @@ headers.forEach((header) => {
     const name = header.innerText.replace(/(\.{3})$/, '');
     const wants = data.games
         .filter((game) => (game.B.includes(name)))
-        .map((game) => { console.log('sub matched:', game); return game.N; })
+        .map((game) => { return game.N; })
     if (wants.length) {
-        const text = wants.length === 1 ? `${wants[0]}` : `[${wants.join('/')}]`;
-        header.nextElementSibling.innerText += ` (exp ${text})`;
+        const text = wants.length === 1 ? `${wants[0]}` : `${wants.join('/')}`;
+        // HACK: Use change innerText instead to insert a new node
+        header.nextElementSibling.innerText += ` (W${text})`;
     }
 });
 console.log('單機遊戲 Sheets: DOM modified');
