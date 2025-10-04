@@ -79,7 +79,7 @@ headers.forEach((header) => {
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const dateStr = `D${year}/${month}`;
 
-            return `(${wantStr},${dateStr})`;
+            return `(${wantStr}, ${dateStr})`;
         })
         .join('or');
 
