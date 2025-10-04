@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steamgifts-sheet-fetcher
 // @namespace    https://github.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher
-// @version      1.0.5
+// @version      1.0.6
 // @description  Fetch games from Google Sheet via App Script
 // @author       YiFanChen99
 // @match        *://www.steamgifts.com/giveaways/search*
@@ -57,11 +57,15 @@ console.log('單機遊戲 Sheets: updated');
 const headers = document.querySelectorAll('.giveaway__heading__name');
 headers.forEach((header) => {
     const name = header.innerText.replace(/(\.{3})$/, '');
-    const wants = data.games
-        .filter((game) => (game.B.includes(name)));
+    let wants = data.games.filter((game) => (game.B.includes(name)));
 
     if (!wants.length) {
         return;
+    }
+
+    const exactMatches = wants.filter(game => game.B === name);
+    if (exactMatches.length) {
+        wants = exactMatches;
     }
 
     // HACK: Use change innerText instead to insert a new node
