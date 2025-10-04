@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steamgifts-sheet-fetcher
 // @namespace    https://github.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher
-// @version      1.0.9
+// @version      1.1.0
 // @description  Fetch games from Google Sheet via App Script
 // @author       YiFanChen99
 // @match        *://www.steamgifts.com/giveaways/search*
@@ -82,9 +82,9 @@ headers.forEach((header) => {
     }, null);
     const year = String(earliest.getFullYear()).slice(-2);
     const month = String(earliest.getMonth() + 1).padStart(2, '0');
-    const dateDisplay = `U${year}/${month}`;
+    const dateDisplay = `${year}/${month}`;
 
     // HACK: Use change innerText instead to insert a new node
-    header.nextElementSibling.innerText += ` (${wantDisplay}, ${dateDisplay})`;
+    header.nextElementSibling.innerText += ` (${wantDisplay}) (${dateDisplay})`;
 });
 console.log('單機遊戲 Sheets: DOM modified');
