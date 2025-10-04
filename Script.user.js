@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steamgifts-sheet-fetcher
 // @namespace    https://github.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher
-// @version      1.1.0
+// @version      1.1.1
 // @description  Fetch games from Google Sheet via App Script
 // @author       YiFanChen99
 // @match        *://www.steamgifts.com/giveaways/search*
@@ -54,6 +54,26 @@ const data = await updateData();
 console.log('單機遊戲 Sheets: updated');
 
 
+class Displayer {
+    static currentYear = new Date().getFullYear();
+
+    static toWant(games) {
+        const want = games.map(game => (game.J)).join('/');
+        return `${/^(\d|$)/.test(want) ? 'W' : 'W-'}${want}`;
+    };
+    /**
+     * @returns /Y\d{2}/ | ''
+     */
+    static toUpdateYear(games) {
+        const earliest = games.reduce((min, game) => {
+            const date = new Date(game.G);
+            return (!min || date < min) ? date : min;
+        }, null);
+        const year = earliest.getFullYear();
+        return year < (this.currentYear - 3) ? `Y${String(year).slice(2)}` : '';
+    };
+}
+
 const headers = document.querySelectorAll('.giveaway__heading__name');
 headers.forEach((header) => {
     const name = header.innerText.replace(/(\.{3})$/, '');
@@ -73,18 +93,11 @@ headers.forEach((header) => {
         games = exactMatches;
     }
 
-    const want = games.map(game => (game.J)).join('/');
-    const wantDisplay = `${/^\d/.test(want) ? 'W' : 'W-'}${want}`;
-
-    const earliest = games.reduce((min, game) => {
-        const date = new Date(game.G);
-        return (!min || date < min) ? date : min;
-    }, null);
-    const year = String(earliest.getFullYear()).slice(-2);
-    const month = String(earliest.getMonth() + 1).padStart(2, '0');
-    const dateDisplay = `${year}/${month}`;
+    const want = Displayer.toWant(games);
+    const year = Displayer.toUpdateYear(games);
+    const yearMaybe = year ? ` (${year})` : '';
 
     // HACK: Use change innerText instead to insert a new node
-    header.nextElementSibling.innerText += ` (${wantDisplay}) (${dateDisplay})`;
+    header.nextElementSibling.innerText += ` (${want})${yearMaybe}`;
 });
 console.log('單機遊戲 Sheets: DOM modified');
