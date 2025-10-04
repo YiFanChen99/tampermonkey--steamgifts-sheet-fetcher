@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steamgifts-sheet-fetcher
 // @namespace    https://github.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher
-// @version      1.0.3
+// @version      1.0.4
 // @description  Fetch games from Google Sheet via App Script
 // @author       YiFanChen99
 // @match        *://www.steamgifts.com/giveaways/search*
@@ -17,7 +17,7 @@ const updateDurationMs = 24 * 60 * 60 * 1000; // 24 hours
 const webAppUrl = 'https://script.google.com/macros/s/AKfycbwZWh1RFJmNCUaaVQyEzMXZRPDF8NlXtPwxyqKp_Wx2uiNqjnoh_yO7k334QdeNRyQR/exec';
 
 async function fetchData() {
-    console.log('單機遊戲 Sheets: fetchData start');
+    console.log('單機遊戲 Sheets: fetchData starting ...');
     return new Promise(resolve => {
         GM_xmlhttpRequest({
             method: "GET",
@@ -68,7 +68,7 @@ headers.forEach((header) => {
 
     const wantStrs = wants
         .map((game) => {
-            const dateStr = new Date(game.K).toLocaleDateString();
+            const dateStr = new Date(game.G).toLocaleDateString();
             return `(W${game.J}) (UD${dateStr})`;
         })
         .join('/');
