@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steamgifts-sheet-fetcher
 // @namespace    https://github.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher
-// @version      1.0.2
+// @version      1.0.3
 // @description  Fetch games from Google Sheet via App Script
 // @author       YiFanChen99
 // @match        *://www.steamgifts.com/giveaways/search*
@@ -58,12 +58,21 @@ const headers = document.querySelectorAll('.giveaway__heading__name');
 headers.forEach((header) => {
     const name = header.innerText.replace(/(\.{3})$/, '');
     const wants = data.games
-        .filter((game) => (game.B.includes(name)))
-        .map((game) => { return game.N; })
-    if (wants.length) {
-        const text = wants.length === 1 ? `${wants[0]}` : `${wants.join('/')}`;
-        // HACK: Use change innerText instead to insert a new node
-        header.nextElementSibling.innerText += ` (W${text})`;
+        .filter((game) => (game.B.includes(name)));
+
+    if (!wants.length) {
+        return;
     }
+
+    // HACK: Use change innerText instead to insert a new node
+
+    const wantStrs = wants
+        .map((game) => {
+            const dateStr = new Date(game.K).toLocaleDateString();
+            return `(W${game.J}) (UD${dateStr})`;
+        })
+        .join('/');
+
+    header.nextElementSibling.innerText += ` ${wantStrs}`;
 });
 console.log('單機遊戲 Sheets: DOM modified');
