@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steamgifts-sheet-fetcher
 // @namespace    https://github.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher
-// @version      1.0.6
+// @version      1.0.7
 // @description  Fetch games from Google Sheet via App Script
 // @author       YiFanChen99
 // @match        *://www.steamgifts.com/giveaways/search*
@@ -57,32 +57,29 @@ console.log('單機遊戲 Sheets: updated');
 const headers = document.querySelectorAll('.giveaway__heading__name');
 headers.forEach((header) => {
     const name = header.innerText.replace(/(\.{3})$/, '');
-    let wants = data.games.filter((game) => (game.B.includes(name)));
+    let games = data.games.filter((game) => (game.B.includes(name)));
 
-    if (!wants.length) {
+    if (!games.length) {
         return;
     }
 
-    const exactMatches = wants.filter(game => game.B === name);
+    const exactMatches = games.filter(game => game.B === name);
     if (exactMatches.length) {
-        wants = exactMatches;
+        games = exactMatches;
     }
 
+    const want = games.map(game => (game.J)).join('/');
+    const wantDisplay = `${/^\d/.test(want) ? 'W' : 'W-'}${want}`;
+
+    const earliest = games.reduce((min, game) => {
+        const date = new Date(game.G);
+        return (!min || date < min) ? date : min;
+    }, null);
+    const year = String(earliest.getFullYear()).slice(-2);
+    const month = String(earliest.getMonth() + 1).padStart(2, '0');
+    const dateDisplay = `(U${year}/${month})`;
+
     // HACK: Use change innerText instead to insert a new node
-
-    const wantStrs = wants
-        .map((game) => {
-            const wantStr = /^\d/.test(game.J) ? `W${game.J}` : `W-${game.J}`;
-
-            const date = new Date(game.G);
-            const year = String(date.getFullYear()).slice(-2);
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const dateStr = `D${year}/${month}`;
-
-            return `(${wantStr}, ${dateStr})`;
-        })
-        .join('or');
-
-    header.nextElementSibling.innerText += ` ${wantStrs}`;
+    header.nextElementSibling.innerText += ` (${wantDisplay}) (${dateDisplay})`;
 });
 console.log('單機遊戲 Sheets: DOM modified');
