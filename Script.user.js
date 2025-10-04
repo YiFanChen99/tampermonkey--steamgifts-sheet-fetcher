@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steamgifts-sheet-fetcher
 // @namespace    https://github.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher
-// @version      1.0.4
+// @version      1.0.5
 // @description  Fetch games from Google Sheet via App Script
 // @author       YiFanChen99
 // @match        *://www.steamgifts.com/giveaways/search*
@@ -68,10 +68,11 @@ headers.forEach((header) => {
 
     const wantStrs = wants
         .map((game) => {
+            const wantStr = /^\d/.test(game.J) ? `W${game.J}` : `W-${game.J}`;
             const dateStr = new Date(game.G).toLocaleDateString();
-            return `(W${game.J}) (UD${dateStr})`;
+            return `(${wantStr},D${dateStr})`;
         })
-        .join('/');
+        .join('or');
 
     header.nextElementSibling.innerText += ` ${wantStrs}`;
 });
