@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steamgifts-sheet-fetcher
 // @namespace    https://github.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher
-// @version      1.1.4
+// @version      1.1.5
 // @description  Fetch games from Google Sheet via App Script
 // @author       YiFanChen99
 // @match        *://www.steamgifts.com/giveaways/search*
@@ -129,6 +129,7 @@ function modifyPageGiveaways() {
 
         count += 1;
     });
+
     return count;
 }
 
@@ -164,6 +165,8 @@ function modifyPageGiveaway() {
     const pointElement = header.nextElementSibling; // .featured__heading__small
     // HACK: Use change innerText instead to insert a new node
     pointElement.innerText += ` (${want})${yearMaybe}`;
+
+    return true;
 }
 
 modifyDom();
