@@ -94,19 +94,20 @@ function modifyDom() {
     }
 }
 
-/**
- * @returns {number} Count of modified giveaways
- */
-function modifyPageGiveaways() {
-    let count = 0;
 
-    const headers = document.querySelectorAll('.giveaway__heading__name');
-    headers.forEach((header) => {
-        const name = header.innerText.replace(/(\.{3})$/, '');
+class DomModifier {
+    /**
+     * @param {HTMLElement} headerElement
+     * @returns {boolean} Whether modified successfully
+     */
+    static modify(headerElement) {
+        if (!headerElement) return false;
+
+        const name = headerElement.innerText.replace(/(\.{3})$/, '');
         let games = data.games.filter((game) => (game.B.includes(name)));
 
         if (!games.length) {
-            return;
+            return false;
         }
 
         const exactMatches = games.filter(game => {
@@ -123,50 +124,32 @@ function modifyPageGiveaways() {
         const year = DisplayFormatter.toUpdateYear(games);
         const yearMaybe = year ? ` (${year})` : '';
 
-        const pointElement = header.nextElementSibling; // .giveaway__heading__thin
-        // HACK: Use change innerText instead to insert a new node
-        pointElement.innerText += ` (${want})${yearMaybe}`;
-
-        count += 1;
-    });
-
-    return count;
+        const pointElement = headerElement.nextElementSibling;
+        if (pointElement) {
+            // HACK: Use change innerText instead to insert a new node
+            pointElement.innerText += ` (${want})${yearMaybe}`;
+            return true;
+        }
+        return false;
+    }
 }
 
 /**
- * TODO: share logic with modifyPageGiveaways
+ * @returns {number} Count of modified giveaways
+ */
+function modifyPageGiveaways() {
+    const headers = document.querySelectorAll('.giveaway__heading__name');
+    // next should be .giveaway__heading__thin
+    return headers.filter((header) => DomModifier.modify(header)).length;
+}
+
+/**
  * @returns {boolean} Whether the giveaway was modified
  */
 function modifyPageGiveaway() {
     const header = document.querySelector('.featured__heading__medium');
-    if (!header) return false;
-
-    const name = header.innerText.replace(/(\.{3})$/, '');
-    let games = data.games.filter((game) => (game.B.includes(name)));
-
-    if (!games.length) {
-        return false;
-    }
-
-    const exactMatches = games.filter(game => {
-        if (game.B === name) { return true; }
-        return game.B.split('/').some(part => {
-            return part.trim() === name;
-        });
-    });
-    if (exactMatches.length) {
-        games = exactMatches;
-    }
-
-    const want = DisplayFormatter.toWant(games);
-    const year = DisplayFormatter.toUpdateYear(games);
-    const yearMaybe = year ? ` (${year})` : '';
-
-    const pointElement = header.nextElementSibling; // .featured__heading__small
-    // HACK: Use change innerText instead to insert a new node
-    pointElement.innerText += ` (${want})${yearMaybe}`;
-
-    return true;
+    // next should be .featured__heading__small
+    return DomModifier.modify(header);
 }
 
 modifyDom();
