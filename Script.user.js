@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Steamgifts-sheet-fetcher
 // @namespace    https://github.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher
-// @version      1.1.2
+// @version      1.1.3
 // @description  Fetch games from Google Sheet via App Script
 // @author       YiFanChen99
-// @match        *://www.steamgifts.com/giveaways/search*
+// @match        *://www.steamgifts.com/(giveaways/search*|giveaway/*)
 // @grant        GM_xmlhttpRequest
 // @icon         https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher/main/favicon.ico
 // @downloadURL  https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher/main/Script.user.js
@@ -54,7 +54,10 @@ const data = await updateData();
 console.log('單機遊戲 Sheets: updated');
 
 
-class Displayer {
+/**
+ * Format data from Google Sheet to display text.
+ */
+class DisplayFormatter {
     static currentYear = new Date().getFullYear();
 
     static toWant(games) {
@@ -74,13 +77,73 @@ class Displayer {
     };
 }
 
-const headers = document.querySelectorAll('.giveaway__heading__name');
-headers.forEach((header) => {
+
+/**
+ * @returns {void}
+ */
+function modifyDom() {
+    if (window.location.pathname.startsWith('/giveaways/search')) {
+        const count = modifyPageGiveaways();
+        console.log(`單機遊戲 Sheets: \`giveaways\` ${count} DOM modified`);
+    } else if (window.location.pathname.startsWith('/giveaway/')) {
+        const done = modifyPageGiveaway();
+        console.log(`單機遊戲 Sheets: \`giveaway\` ${done ? 'DOM modified' : 'No modification applied.'}`);
+    } else {
+        console.log('單機遊戲 Sheets: No modification applied.');
+    }
+}
+
+/**
+ * @returns {number} Count of modified giveaways
+ */
+function modifyPageGiveaways() {
+    let count = 0;
+
+    const headers = document.querySelectorAll('.giveaway__heading__name');
+    headers.forEach((header) => {
+        const name = header.innerText.replace(/(\.{3})$/, '');
+        let games = data.games.filter((game) => (game.B.includes(name)));
+
+        if (!games.length) {
+            return;
+        }
+
+        const exactMatches = games.filter(game => {
+            if (game.B === name) { return true; }
+            return game.B.split('/').some(part => {
+                return part.trim() === name;
+            });
+        });
+        if (exactMatches.length) {
+            games = exactMatches;
+        }
+
+        const want = DisplayFormatter.toWant(games);
+        const year = DisplayFormatter.toUpdateYear(games);
+        const yearMaybe = year ? ` (${year})` : '';
+
+        const pointElement = header.nextElementSibling; // .giveaway__heading__thin
+        // HACK: Use change innerText instead to insert a new node
+        pointElement.innerText += ` (${want})${yearMaybe}`;
+
+        count += 1;
+    });
+    return count;
+}
+
+/**
+ * TODO: share logic with modifyPageGiveaways
+ * @returns {boolean} Whether the giveaway was modified
+ */
+function modifyPageGiveaway() {
+    const header = document.querySelector('.featured__heading__medium');
+    if (!header) return false;
+
     const name = header.innerText.replace(/(\.{3})$/, '');
     let games = data.games.filter((game) => (game.B.includes(name)));
 
     if (!games.length) {
-        return;
+        return false;
     }
 
     const exactMatches = games.filter(game => {
@@ -93,11 +156,13 @@ headers.forEach((header) => {
         games = exactMatches;
     }
 
-    const want = Displayer.toWant(games);
-    const year = Displayer.toUpdateYear(games);
+    const want = DisplayFormatter.toWant(games);
+    const year = DisplayFormatter.toUpdateYear(games);
     const yearMaybe = year ? ` (${year})` : '';
 
+    const pointElement = header.nextElementSibling; // .featured__heading__small
     // HACK: Use change innerText instead to insert a new node
-    header.nextElementSibling.innerText += ` (${want})${yearMaybe}`;
-});
-console.log('單機遊戲 Sheets: DOM modified');
+    pointElement.innerText += ` (${want})${yearMaybe}`;
+}
+
+modifyDom();
