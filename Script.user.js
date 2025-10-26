@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steamgifts-sheet-fetcher
 // @namespace    https://github.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher
-// @version      1.1.7
+// @version      1.1.8
 // @description  Fetch games from Google Sheet via App Script
 // @author       YiFanChen99
 // @match        *://www.steamgifts.com/giveaways/search*
@@ -70,6 +70,9 @@ class DisplayFormatter {
      */
     static toUpdateYear(games) {
         const earliest = games.reduce((min, game) => {
+            if (!game.G) {
+                return min;
+            }
             const date = new Date(game.G);
             return (!min || date < min) ? date : min;
         }, null);
