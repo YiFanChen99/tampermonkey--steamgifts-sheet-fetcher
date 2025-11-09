@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steamgifts-helper
 // @namespace    https://github.com/YiFanChen99/tampermonkey--steamgifts-helper
-// @version      1.3.1
+// @version      1.3.2
 // @description  Fetch games from Google Sheet via App Script
 // @author       YiFanChen99
 // @match        *://www.steamgifts.com/giveaways/search*
@@ -12,7 +12,7 @@
 // @icon         https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-helper/main/favicon.ico
 // @downloadURL  https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-helper/main/Script.user.js
 // @updateURL    https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-helper/main/Script.meta.js
-// @require      https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-helper/main/src/dataFetcher.js
+// @require      https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-helper/main/src/sheetFetcher.js
 // @require      https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-helper/main/src/domModifier.js
 // ==/UserScript==
 

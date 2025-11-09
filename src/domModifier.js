@@ -129,7 +129,6 @@ class RegionModifier {
     }
 
     /**
-     * TODO
      * @private
      * @param {HTMLElement} regionElement form `<a href="/giveaway/xxxxx/griftlands/region-restrictions">`
      * @returns {boolean} Whether modified successfully
@@ -139,35 +138,49 @@ class RegionModifier {
             return false;
         }
 
-        const targetUrl = regionElement.href;
-        const targetSelector = '.table__row-outer-wrap';
-        
-        const counts = await new Promise(resolve => {
+        await this.fetchRegionCounts(regionElement.href)
+            .then(counts => {
+                regionElement.appendChild(document.createTextNode(`${counts}`));
+                return true;
+            })
+            .catch(msg => {
+                console.error(msg);
+                return false;
+            });
+    }
+
+    /**
+     * @private
+     * @returns {Promise<number>}
+     */
+    async fetchRegionCounts(url) {
+        const resultsSelector = '.pagination__results';
+
+        return await new Promise((resolve, reject) => {
             GM_xmlhttpRequest({
                 method: 'GET',
-                url: targetUrl,
+                url: url,
                 onload: function(response) {
                     if (response.status !== 200) {
-                        return resolve(new Error(`Failed to fetch ${targetUrl}: ${response.status}`));
+                        return reject(`Failed to fetch ${url}: ${response.status}`);
                     }
 
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(response.responseText, 'text/html');
-                    const elements = doc.querySelectorAll(targetSelector);
-                    resolve(elements.length);
+                    const text = doc.querySelector(resultsSelector).innerText;
+                    if (text.contains('No results')) {
+                        resolve(0);
+                    }
+                    const matched = text.match(/(?:\d+) to (?:\d+) of (\d+) result/);
+                    if (!matched) {
+                        return reject(`Unexpected results text format: ${text}`);
+                    }
+                    resolve(parseInt(matched[1], 10));
                 },
                 onerror: function(error) {
-                    return resolve(new Error(`Failed to fetch ${targetUrl}: ${error.message}`));
+                    return reject(`Failed to fetch ${url}: ${error.message}`);
                 }
             });
         });
-
-        if (counts instanceof Error) {
-            console.error(counts);
-            return false;
-        }
-
-        regionElement.appendChild(document.createTextNode(`${counts}`));
-        return true;
     }
 }
