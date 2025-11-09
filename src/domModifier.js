@@ -168,7 +168,7 @@ class RegionModifier {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(response.responseText, 'text/html');
                     const text = doc.querySelector(resultsSelector).innerText;
-                    if (text.contains('No results')) {
+                    if (text.includes('No results')) {
                         resolve(0);
                     }
                     const matched = text.match(/(?:\d+) to (?:\d+) of (\d+) result/);
