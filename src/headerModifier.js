@@ -28,20 +28,48 @@ class DisplayFormatter {
     };
 }
 
-/**
- * -----
- */
 
 class HeaderModifier {
+    constructor(sheetData) {
+        this.sheetData = sheetData;
+    }
+
     /**
+     * @public
+     * @returns {number} Count of modified giveaways
+     */
+    modifyGiveaways() {
+        const headers = document.querySelectorAll('.giveaway__heading__name');
+        // next should be .giveaway__heading__thin
+        let count = 0;
+        headers.forEach((header) => {
+            if (this.modify(header)) {
+                count += 1;
+            }
+        });
+        return count;
+    }
+
+    /**
+     * @public
+     * @returns {boolean} Whether the giveaway was modified
+     */
+    modifyGiveaway() {
+        const header = document.querySelector('.featured__heading__medium');
+        // next should be .featured__heading__small
+        return this.modify(header);
+    }
+
+    /**
+     * @private
      * @param {HTMLElement} headerElement
      * @returns {boolean} Whether modified successfully
      */
-    static modify(headerElement) {
+    modify(headerElement) {
         if (!headerElement) return false;
 
         const name = headerElement.innerText.replace(/(\.{3})$/, '');
-        let games = sheetData.games.filter((game) => (game.B.includes(name)));
+        let games = this.sheetData.games.filter((game) => (game.B.includes(name)));
 
         if (!games.length) {
             return false;
@@ -69,28 +97,4 @@ class HeaderModifier {
         }
         return false;
     }
-}
-
-/**
- * @returns {number} Count of modified giveaways
- */
-function modifyPageGiveaways() {
-    const headers = document.querySelectorAll('.giveaway__heading__name');
-    // next should be .giveaway__heading__thin
-    let count = 0;
-    headers.forEach((header) => {
-        if (HeaderModifier.modify(header)) {
-            count += 1;
-        }
-    });
-    return count;
-}
-
-/**
- * @returns {boolean} Whether the giveaway was modified
- */
-function modifyPageGiveaway() {
-    const header = document.querySelector('.featured__heading__medium');
-    // next should be .featured__heading__small
-    return HeaderModifier.modify(header);
 }

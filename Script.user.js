@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steamgifts-helper
 // @namespace    https://github.com/YiFanChen99/tampermonkey--steamgifts-helper
-// @version      1.2.2
+// @version      1.2.3
 // @description  Fetch games from Google Sheet via App Script
 // @author       YiFanChen99
 // @match        *://www.steamgifts.com/giveaways/search*
@@ -19,12 +19,22 @@
 const sheetData = await getOrFetchData();
 console.log('Steamgifts-helper: updated');
 
+
+let isGiveawaysPage;
 if (window.location.pathname.startsWith('/giveaways/search')) {
-    const count = modifyPageGiveaways();
-    console.log(`Steamgifts-helper: \`giveaways\` ${count} DOM modified`);
+    isGiveawaysPage = true;
 } else if (window.location.pathname.startsWith('/giveaway/')) {
-    const done = modifyPageGiveaway();
-    console.log(`Steamgifts-helper: \`giveaway\` ${done ? 'DOM modified' : 'No modification applied.'}`);
+    isGiveawaysPage = false;
 } else {
-    console.log(`Steamgifts-helper: No modification applied.`);
+    console.warn(`Steamgifts-helper: No modification applied. (Unknown page: ${window.location.pathname})`);
+    return;
+}
+
+const headerModifier = new HeaderModifier(sheetData);
+if (isGiveawaysPage) {
+    const count = headerModifier.modifyGiveaways();
+    console.log(`Steamgifts-helper: \`giveaways\` ${count} headers modified`);
+} else {
+    const done = headerModifier.modifyGiveaway();
+    console.log(`Steamgifts-helper: \`giveaway\` ${done ? 'headers modified' : 'No modification applied.'}`);
 }
