@@ -99,9 +99,100 @@ class HeaderModifier {
 }
 
 
+class Cache {
+    /**
+     * @private
+     */
+    key = '';
+    /**
+     * @private
+     */
+    duration = 0;
+    /**
+     * @private
+     */
+    cache = {};
+    /**
+     * @private
+     */
+    saveTimeout = null;
+
+    /**
+     * @param {string} key
+     * @param {number} duration in ms
+     */
+    constructor(key, duration) {
+        this.key = key;
+        this.duration = duration;
+        this.load();
+        this.clearExpired();
+    }
+
+    /**
+     * @private
+     */
+    load() {
+        try {
+            this.cache = JSON.parse(localStorage.getItem(this.key)) || {};
+        } catch (e) {
+            this.cache = {};
+        }
+    }
+
+    /**
+     * @private
+     */
+    save() {
+        localStorage.setItem(this.key, JSON.stringify(this.cache));
+    }
+
+    /**
+     * @private
+     */
+    saveDebounced() {
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+        }
+        this.saveTimeout = setTimeout(() => {
+            this.save();
+            this.saveTimeout = null;
+        }, 30 * 1000);
+    }
+
+    /**
+     * @private
+     */
+    clearExpired() {
+        const now = Date.now();
+        for (const [key, value] of Object.entries(this.cache)) {
+            if (!value.timestamp || (now - value.timestamp > this.duration)) {
+                delete this.cache[key];
+                this.saveDebounced();
+            }
+        }
+    }
+
+    get(url) {
+        const now = Date.now();
+        const entry = this.cache[url];
+        if (entry && now - entry.timestamp <= this.duration) {
+            return entry.value;
+        }
+        return undefined;
+    }
+
+    set(url, value) {
+        this.cache[url] = { value, timestamp: Date.now() };
+        this.saveDebounced();
+    }
+}
+
 class RegionModifier {
     constructor(sheetData) {
         this.sheetData = sheetData;
+
+        const cacheDuration = 24 * 60 * 60 * 1000; // 1D
+        this.cache = new Cache('ekkoGamesRegions', cacheDuration);
     }
 
     /**
@@ -154,33 +245,52 @@ class RegionModifier {
      * @returns {Promise<number>}
      */
     async fetchRegionCounts(url) {
-        const resultsSelector = '.pagination__results';
+        const cached = this.cache.get(url);
+        if (cached !== undefined) {
+            return cached;
+        }
 
         return await new Promise((resolve, reject) => {
             GM_xmlhttpRequest({
                 method: 'GET',
                 url: url,
-                onload: function(response) {
+                onload: (response) => {
                     if (response.status !== 200) {
                         return reject(`Failed to fetch ${url}: ${response.status}`);
                     }
 
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(response.responseText, 'text/html');
-                    const text = doc.querySelector(resultsSelector).innerText;
-                    if (text.includes('No results')) {
-                        resolve(0);
+                    const resultsSelector = '.pagination__results';
+                    const text = doc.querySelector(resultsSelector)?.innerText;
+                    if (!text) {
+                        return reject(`Results text not found in ${url}`);
                     }
-                    const matched = text.match(/(?:\d+) to (?:\d+) of (\d+) result/);
-                    if (!matched) {
-                        return reject(`Unexpected results text format: ${text}`);
-                    }
-                    resolve(parseInt(matched[1], 10));
+                    const count = this.parseRegionCounts(text);
+                    this.cache.set(url, count);
+                    resolve(count);
                 },
-                onerror: function(error) {
+                onerror: (error) => {
                     return reject(`Failed to fetch ${url}: ${error.message}`);
                 }
             });
         });
+    }
+
+    /**
+     * @private
+     * @param {string} text Region results text
+     * @returns {number}
+     */
+    parseRegionCounts(text) {
+        if (text.includes('No results')) {
+            return 0;
+        }
+
+        const matched = text.match(/(?:\d+) to (?:\d+) of (\d+) result/);
+        if (!matched) {
+            throw new Error(`Unexpected results text format: ${text}`);
+        }
+        return parseInt(matched[1], 10);
     }
 }
