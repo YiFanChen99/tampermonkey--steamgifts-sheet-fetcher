@@ -167,7 +167,7 @@ class RegionModifier {
             return false;
         }
 
-        regionElement.appendChild(document.createTextNode(` ${counts}`));
+        regionElement.appendChild(document.createTextNode(`${counts}`));
         return true;
     }
 }
