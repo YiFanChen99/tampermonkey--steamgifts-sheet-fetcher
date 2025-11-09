@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steamgifts-sheet-fetcher
 // @namespace    https://github.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher
-// @version      1.1.8
+// @version      1.2.0a1
 // @description  Fetch games from Google Sheet via App Script
 // @author       YiFanChen99
 // @match        *://www.steamgifts.com/giveaways/search*
@@ -10,48 +10,12 @@
 // @icon         https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher/main/favicon.ico
 // @downloadURL  https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher/main/Script.user.js
 // @updateURL    https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher/main/Script.meta.js
+// @require      https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-sheet-fetcher/main/src/dataFetcher.js
 // ==/UserScript==
 
 'use strict';
 
-const updateDurationMs = 24 * 60 * 60 * 1000; // 24 hours
-const webAppUrl = 'https://script.google.com/macros/s/AKfycbwZWh1RFJmNCUaaVQyEzMXZRPDF8NlXtPwxyqKp_Wx2uiNqjnoh_yO7k334QdeNRyQR/exec';
-
-async function fetchData() {
-    console.log('單機遊戲 Sheets: fetchData starting ...');
-    return new Promise(resolve => {
-        GM_xmlhttpRequest({
-            method: "GET",
-            url: webAppUrl,
-            onload: function(response) {
-                const resp = JSON.parse(response.responseText);
-                const data = { ...resp, time: Date.now() }
-                localStorage.setItem('ekkoGames', JSON.stringify(data));
-                resolve(data);
-            }
-        });
-    });
-}
-
-/**
- * @returns { time, games, labelMap }
- */
-async function updateData() {
-    const old = localStorage.getItem('ekkoGames');
-    if (old) {
-        const record = JSON.parse(old);
-        const diffMs = Date.now() - record.time;
-        if (diffMs > updateDurationMs) {
-            return await fetchData();
-        } else {
-            return record;
-        }
-    } else {
-        return await fetchData();
-    }
-}
-
-const data = await updateData();
+const sheetData = await getOrFetchData();
 console.log('單機遊戲 Sheets: updated');
 
 
@@ -110,7 +74,7 @@ class DomModifier {
         if (!headerElement) return false;
 
         const name = headerElement.innerText.replace(/(\.{3})$/, '');
-        let games = data.games.filter((game) => (game.B.includes(name)));
+        let games = sheetData.games.filter((game) => (game.B.includes(name)));
 
         if (!games.length) {
             return false;
