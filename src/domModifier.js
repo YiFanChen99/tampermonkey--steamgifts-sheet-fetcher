@@ -2,7 +2,7 @@
 /**
  * Format data from Google Sheet to display text.
  */
-class DisplayFormatter {
+class HeaderDisplayFormatter {
     static currentYear = new Date().getFullYear();
 
     static toWant(games) {
@@ -27,7 +27,6 @@ class DisplayFormatter {
         return year < (this.currentYear - 3) ? `Y${String(year).slice(2)}` : '';
     };
 }
-
 
 class HeaderModifier {
     constructor(sheetData) {
@@ -85,8 +84,8 @@ class HeaderModifier {
             games = exactMatches;
         }
 
-        const want = DisplayFormatter.toWant(games);
-        const year = DisplayFormatter.toUpdateYear(games);
+        const want = HeaderDisplayFormatter.toWant(games);
+        const year = HeaderDisplayFormatter.toUpdateYear(games);
         const yearMaybe = year ? ` (${year})` : '';
 
         const pointElement = headerElement.nextElementSibling;
@@ -96,5 +95,79 @@ class HeaderModifier {
             return true;
         }
         return false;
+    }
+}
+
+
+class RegionModifier {
+    constructor(sheetData) {
+        this.sheetData = sheetData;
+    }
+
+    /**
+     * @public
+     * @returns {number} Count of modified giveaways
+     */
+    async modifyGiveaways() {
+        const regions = document.querySelectorAll('.giveaway__column--region-restricted');
+        let count = 0;
+        for (const region of regions) {
+            if (await this.modify(region)) {
+                count += 1;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * @public
+     * @returns {boolean} Whether the giveaway was modified
+     */
+    async modifyGiveaway() {
+        const region = document.querySelector('.featured__column--region-restricted');
+        return await this.modify(region);
+    }
+
+    /**
+     * TODO
+     * @private
+     * @param {HTMLElement} regionElement form `<a href="/giveaway/xxxxx/griftlands/region-restrictions">`
+     * @returns {boolean} Whether modified successfully
+     */
+    async modify(regionElement) {
+        if (!regionElement || !regionElement.href) {
+            return false;
+        }
+
+        const targetUrl = regionElement.href;
+        const targetSelector = '.table__row-outer-wrap';
+        
+        const counts = await new Promise(resolve => {
+            GM_xmlhttpRequest({
+                method: 'GET',
+                url: targetUrl,
+                onload: function(response) {
+                    if (response.status !== 200) {
+                        return resolve(new Error(`Failed to fetch ${targetUrl}: ${response.status}`));
+                    }
+
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(response.responseText, 'text/html');
+                    const elements = doc.querySelectorAll(targetSelector);
+                    resolve(elements.length);
+                },
+                onerror: function(error) {
+                    return resolve(new Error(`Failed to fetch ${targetUrl}: ${error.message}`));
+                }
+            });
+        });
+
+        if (counts instanceof Error) {
+            console.error(counts);
+            return false;
+        }
+
+        regionElement.appendChild(document.createTextNode(` ${counts}`));
+        return true;
     }
 }

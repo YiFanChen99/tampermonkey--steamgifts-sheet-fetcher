@@ -1,17 +1,19 @@
 // ==UserScript==
 // @name         Steamgifts-helper
 // @namespace    https://github.com/YiFanChen99/tampermonkey--steamgifts-helper
-// @version      1.2.3
+// @version      1.3.0
 // @description  Fetch games from Google Sheet via App Script
 // @author       YiFanChen99
 // @match        *://www.steamgifts.com/giveaways/search*
 // @match        *://www.steamgifts.com/giveaway/*
 // @grant        GM_xmlhttpRequest
+// @connect      script.google.com
+// @connect      www.steamgifts.com
 // @icon         https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-helper/main/favicon.ico
 // @downloadURL  https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-helper/main/Script.user.js
 // @updateURL    https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-helper/main/Script.meta.js
 // @require      https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-helper/main/src/dataFetcher.js
-// @require      https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-helper/main/src/headerModifier.js
+// @require      https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-helper/main/src/domModifier.js
 // ==/UserScript==
 
 'use strict';
@@ -31,10 +33,15 @@ if (window.location.pathname.startsWith('/giveaways/search')) {
 }
 
 const headerModifier = new HeaderModifier(sheetData);
+const regionModifier = new RegionModifier(sheetData);
 if (isGiveawaysPage) {
     const count = headerModifier.modifyGiveaways();
     console.log(`Steamgifts-helper: \`giveaways\` ${count} headers modified`);
+    const regionCount = await regionModifier.modifyGiveaways();
+    console.log(`Steamgifts-helper: \`giveaways\` ${regionCount} region tags modified`);
 } else {
     const done = headerModifier.modifyGiveaway();
-    console.log(`Steamgifts-helper: \`giveaway\` ${done ? 'headers modified' : 'No modification applied.'}`);
+    console.log(`Steamgifts-helper: \`giveaway\` ${done ? 'headers modified' : 'No headers modification applied.'}`);
+    const regionDone = await regionModifier.modifyGiveaway();
+    console.log(`Steamgifts-helper: \`giveaway\` ${regionDone ? 'region tags modified' : 'No region tags modification applied.'}`);
 }
