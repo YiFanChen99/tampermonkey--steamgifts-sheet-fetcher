@@ -16,6 +16,13 @@
 // @require      https://raw.githubusercontent.com/YiFanChen99/tampermonkey--steamgifts-helper/main/src/domModifier.js
 // ==/UserScript==
 
+/**
+ * User localstorage keys:
+ *  ekkoGames: { games: Array, labelMap, time }
+ *  ekkoGamesAccount?: 'yf'
+ *  ekkoGamesRegions: Record<string, { value, time }>
+ */
+
 'use strict';
 
 const sheetData = await getOrFetchData();

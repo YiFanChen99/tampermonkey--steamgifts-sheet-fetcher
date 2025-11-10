@@ -1,13 +1,23 @@
 
 const updateDurationMs = 24 * 60 * 60 * 1000; // 24 hours
-const webAppUrl = 'https://script.google.com/macros/s/AKfycbwZWh1RFJmNCUaaVQyEzMXZRPDF8NlXtPwxyqKp_Wx2uiNqjnoh_yO7k334QdeNRyQR/exec';
+
+const webAppUrlPig = 'https://script.google.com/macros/s/AKfycbwZWh1RFJmNCUaaVQyEzMXZRPDF8NlXtPwxyqKp_Wx2uiNqjnoh_yO7k334QdeNRyQR/exec';
+const webAppUrlYf = 'https://script.google.com/macros/s/AKfycbzyUF8p0BVHzNKRQb9aVwnsfNwhUi6zBZ41jrzh1Ajd8uVv78DWW03cxxtaxmdaX9yD/exec';
+
+function getWebAppUrl() {
+    const account = localStorage.getItem('ekkoGamesAccount');
+    if (account === 'yf') {
+        return webAppUrlYf;
+    }
+    return webAppUrlPig; // default
+}
 
 async function fetchData() {
     console.log('Steamgifts-helper: fetchData starting ...');
     return new Promise(resolve => {
         GM_xmlhttpRequest({
             method: "GET",
-            url: webAppUrl,
+            url: getWebAppUrl(),
             onload: function(response) {
                 const resp = JSON.parse(response.responseText);
                 const data = { ...resp, time: Date.now() }

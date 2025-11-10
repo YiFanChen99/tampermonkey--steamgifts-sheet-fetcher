@@ -165,7 +165,7 @@ class Cache {
     clearExpired() {
         const now = Date.now();
         for (const [key, value] of Object.entries(this.cache)) {
-            if (!value.timestamp || (now - value.timestamp > this.duration)) {
+            if (!value.time || (now - value.time > this.duration)) {
                 delete this.cache[key];
                 this.saveDebounced();
             }
@@ -175,14 +175,14 @@ class Cache {
     get(url) {
         const now = Date.now();
         const entry = this.cache[url];
-        if (entry && now - entry.timestamp <= this.duration) {
+        if (entry && now - entry.time <= this.duration) {
             return entry.value;
         }
         return undefined;
     }
 
     set(url, value) {
-        this.cache[url] = { value, timestamp: Date.now() };
+        this.cache[url] = { value, time: Date.now() };
         this.saveDebounced();
     }
 }
